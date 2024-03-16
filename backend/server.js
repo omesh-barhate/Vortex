@@ -1,18 +1,18 @@
 import path from "path";
 import express from "express";
 import dotenv from "dotenv";
-import connection from "./db/connection.js";
+import connectDB from "./db/connectDB.js";
 import cookieParser from "cookie-parser";
-import userroute from "./routes/userroute.js";
-import postroute from "./routes/postroute.js";
-import messageroute from "./routes/messageroute.js";
+import userRoutes from "./routes/userRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 import { v2 as cloudinary } from "cloudinary";
 import { app, server } from "./socket/socket.js";
 import job from "./cron/cron.js";
 
 dotenv.config();
 
-connection();
+connectDB();
 job.start();
 
 const PORT = process.env.PORT || 5000;
@@ -24,16 +24,22 @@ cloudinary.config({
 	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-app.use(express.json({ limit: "50mb" })); 
-app.use(express.urlencoded({ extended: true })); 
+// Middlewares
+app.use(express.json({ limit: "50mb" })); // To parse JSON data in the req.body
+app.use(express.urlencoded({ extended: true })); // To parse form data in the req.body
 app.use(cookieParser());
 
-app.use("/api/users", userroute);
-app.use("/api/posts", postroute);
-app.use("/api/messages", messageroute);
+// Routes
+app.use("/api/users", userRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/messages", messageRoutes);
+
+// http://localhost:5000 => backend,frontend
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+	// react app
 	app.get("*", (req, res) => {
 		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
 	});
